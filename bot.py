@@ -12,7 +12,7 @@ GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpBF-a36aPqnqkcDPi
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # URL Webhook yang dikasih Render
 
 # Inisialisasi Flask
-app = Flask(_name_)
+app = Flask(__name__)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 # Inisialisasi Telegram Bot (Application)
