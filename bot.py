@@ -7,7 +7,7 @@ from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, Bot
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 import requests
 
-# Ambil variabel lingkungan
+# Ambil variabel dari environment
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://telegram-bot-5iyf.onrender.com")
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpBF-a36aPqnqkcDPi-zLDHyn2N6lKClDKbvKZjmZzeI0X9leiLmk145fukf5Aohwl6g/exec"
@@ -18,12 +18,13 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 # Inisialisasi Telegram Bot (Application)
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+loop = asyncio.get_event_loop()
 
 # Fungsi Start
 async def start(update: Update, context: CallbackContext) -> None:
     keyboard = [[KeyboardButton("📍 Kirim Lokasi", request_location=True)]]
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
-    
+
     await update.message.reply_text("Klik tombol di bawah untuk check-in:", reply_markup=reply_markup)
 
 # Fungsi Terima Lokasi
@@ -61,7 +62,12 @@ application.add_handler(MessageHandler(filters.LOCATION, location))
 @app.route("/webhook", methods=["POST"])
 async def webhook():
     update = Update.de_json(request.get_json(), bot)
-    await application.process_update(update)  # Proses update tanpa threading
+    
+    if not application.ready:  # Pastikan bot sudah diinisialisasi sebelum memproses update
+        print("[ERROR] Bot belum diinisialisasi!")
+        return "Bot belum siap", 503
+
+    await application.process_update(update)
     return "OK", 200
 
 # Fungsi root untuk cek apakah bot aktif
@@ -81,10 +87,8 @@ async def set_webhook():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
 
-    # Pastikan async function dipanggil dengan benar
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_until_complete(set_webhook())
+    loop.run_until_complete(application.initialize())  # Inisialisasi bot sebelum menerima update
+    loop.run_until_complete(set_webhook())  # Set webhook sebelum Flask jalan
 
     # Jalankan Flask untuk menangani webhook
     app.run(debug=True, host="0.0.0.0", port=port)
