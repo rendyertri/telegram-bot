@@ -62,9 +62,9 @@ application.add_handler(MessageHandler(filters.LOCATION, location))
 
 # Fungsi untuk menangani Webhook dari Telegram
 @app.route("/webhook", methods=["POST"])
-def webhook():
+async def webhook():
     update = Update.de_json(request.get_json(), bot)
-    application.update_queue.put(update)
+    await application.update_queue.put(update)  # Tambahkan 'await'
     return "OK", 200
 
 # Fungsi root untuk cek bot jalan
