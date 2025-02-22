@@ -18,7 +18,6 @@ bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 # Inisialisasi Telegram Bot (Application)
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
-loop = asyncio.get_event_loop()
 
 # Fungsi Start
 async def start(update: Update, context: CallbackContext) -> None:
@@ -62,11 +61,8 @@ application.add_handler(MessageHandler(filters.LOCATION, location))
 @app.route("/webhook", methods=["POST"])
 async def webhook():
     update = Update.de_json(request.get_json(), bot)
-    
-    if not application.ready:  # Pastikan bot sudah diinisialisasi sebelum memproses update
-        print("[ERROR] Bot belum diinisialisasi!")
-        return "Bot belum siap", 503
 
+    # Proses update dari Telegram
     await application.process_update(update)
     return "OK", 200
 
@@ -86,8 +82,10 @@ async def set_webhook():
 # Jalankan bot
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
+    loop = asyncio.get_event_loop()
 
-    loop.run_until_complete(application.initialize())  # Inisialisasi bot sebelum menerima update
+    # *Penting: Initialize aplikasi sebelum menerima update*
+    loop.run_until_complete(application.initialize())
     loop.run_until_complete(set_webhook())  # Set webhook sebelum Flask jalan
 
     # Jalankan Flask untuk menangani webhook
