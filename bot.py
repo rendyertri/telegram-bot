@@ -59,7 +59,6 @@ def main():
 
 # Run bot
 if __name__ == "__main__":
-if _name_ == "_main_":
     port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
     application.run_webhook(
         listen="0.0.0.0",
