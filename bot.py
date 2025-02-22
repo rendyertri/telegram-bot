@@ -1,14 +1,22 @@
 from datetime import datetime
 import pytz
 import os
-from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
+from flask import Flask, request
+from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, Bot
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 import requests
-from datetime import datetime
 
 # Ganti dengan API Token dari @BotFather
-TELEGRAM_BOT_TOKEN = "7912406574:AAGpFKhg4mOBOhM8VxVfPiVTLhlBiNYc84Q"
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpBF-a36aPqnqkcDPi-zLDHyn2N6lKClDKbvKZjmZzeI0X9leiLmk145fukf5Aohwl6g/exec"  # Ganti dengan URL Web App dari Google Apps Script
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")  # Gunakan environment variable
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpBF-a36aPqnqkcDPi-zLDHyn2N6lKClDKbvKZjmZzeI0X9leiLmk145fukf5Aohwl6g/exec"
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")  # URL Webhook yang dikasih Render
+
+# Inisialisasi Flask
+app = Flask(_name_)
+bot = Bot(token=TELEGRAM_BOT_TOKEN)
+
+# Inisialisasi Telegram Bot (Application)
+application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
 # Fungsi start
 async def start(update: Update, context: CallbackContext) -> None:
@@ -47,24 +55,32 @@ async def location(update: Update, context: CallbackContext) -> None:
     else:
         await update.message.reply_text(f"⚠️ Gagal check-in! Error: {response.text}")
 
-# Main function
-def main():
-    print("Starting bot...")
-    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+# Tambahkan handler ke bot
+application.add_handler(CommandHandler("start", start))
+application.add_handler(MessageHandler(filters.LOCATION, location))
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.LOCATION, location))
+# Fungsi untuk menangani Webhook dari Telegram
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    update = Update.de_json(request.get_json(), bot)
+    application.update_queue.put(update)
+    return "OK", 200
 
-    print("Polling started...")
-    app.run_polling(drop_pending_updates=True)
+# Fungsi root untuk cek bot jalan
+@app.route("/", methods=["GET"])
+def home():
+    return "Bot is running!"
 
 # Run bot
-if __name__ == "__main__":
+if _name_ == "_main_":
     port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
+
+    # Set Webhook untuk Telegram Bot
     application.run_webhook(
         listen="0.0.0.0",
         port=port,
         webhook_url=f"{WEBHOOK_URL}/webhook"
     )
+
+    # Jalankan Flask untuk menjaga bot tetap hidup
     app.run(debug=True, host="0.0.0.0", port=port)
-    main()
