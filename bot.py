@@ -14,8 +14,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Ambil ENV variables
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/YOUR-SCRIPT-URL/exec"
+TELEGRAM_BOT_TOKEN = "7912406574:AAGpFKhg4mOBOhM8VxVfPiVTLhlBiNYc84Q"  # Token bot Telegram
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpBF-a36aPqnqkcDPi-zLDHyn2N6lKClDKbvKZjmZzeI0X9leiLmk145fukf5Aohwl6g/exec"  # Google Script URL
 
 # Inisialisasi Bot
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
