@@ -79,7 +79,11 @@ if __name__ == "__main__":
 
     # Set Webhook untuk Telegram Bot
     async def set_webhook():
-    await application.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
+    if WEBHOOK_URL:  # Pastikan WEBHOOK_URL tidak kosong
+        print(f"Setting webhook to {WEBHOOK_URL}/webhook")
+        await application.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
+    else:
+        print("ERROR: WEBHOOK_URL tidak ditemukan di environment variables.")
 
 if _name_ == "_main_":
     port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
