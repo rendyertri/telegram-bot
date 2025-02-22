@@ -1,37 +1,46 @@
+import os
+import logging
+import requests
+import asyncio
 from datetime import datetime
 import pytz
-import os
-import asyncio
 from flask import Flask, request
-from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, Bot
+from telegram import Update, Bot, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
-import requests
 
-# Ambil variabel dari environment
+# Konfigurasi logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(_name_)
+
+# Ambil TOKEN dari environment variable
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://telegram-bot-5iyf.onrender.com")
-GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpBF-a36aPqnqkcDPi-zLDHyn2N6lKClDKbvKZjmZzeI0X9leiLmk145fukf5Aohwl6g/exec"
+GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_URL/exec"
 
-# Inisialisasi Flask & Bot
+# Inisialisasi Flask
 app = Flask(__name__)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
-# Inisialisasi Telegram Bot (Application)
+# Inisialisasi Telegram Bot
 application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-# Fungsi Start
+# ✅ Fungsi Start
 async def start(update: Update, context: CallbackContext) -> None:
+    logger.info(f"User {update.message.from_user.username} menekan /start")
     keyboard = [[KeyboardButton("📍 Kirim Lokasi", request_location=True)]]
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True, resize_keyboard=True)
 
-    await update.message.reply_text("Klik tombol di bawah untuk check-in:", reply_markup=reply_markup)
+    await update.message.reply_text(
+        "Klik tombol di bawah untuk check-in:",
+        reply_markup=reply_markup
+    )
 
-# Fungsi Terima Lokasi
+# ✅ Fungsi untuk menerima lokasi user
 async def location(update: Update, context: CallbackContext) -> None:
     user = update.message.from_user
     location = update.message.location
 
-    # Konversi waktu UTC ke WIB
+    # Konversi waktu dari UTC ke WIB
     utc_now = datetime.utcnow()
     wib = pytz.timezone("Asia/Jakarta")
     wib_now = utc_now.replace(tzinfo=pytz.utc).astimezone(wib)
@@ -46,49 +55,45 @@ async def location(update: Update, context: CallbackContext) -> None:
 
     # Kirim data ke Google Sheets
     response = requests.post(GOOGLE_SCRIPT_URL, json=data)
-    print(f"[DEBUG] Response Google Sheets: {response.status_code}, {response.text}")
+    logger.info(f"Google Sheets Response: {response.status_code}, {response.text}")
 
     if response.status_code == 200:
         await update.message.reply_text("✅ Check-in sukses! Data telah disimpan.")
     else:
         await update.message.reply_text(f"⚠️ Gagal check-in! Error: {response.text}")
 
-# Tambahkan handler
+# Tambahkan handler ke bot
 application.add_handler(CommandHandler("start", start))
 application.add_handler(MessageHandler(filters.LOCATION, location))
 
-# Fungsi untuk menangani Webhook dari Telegram
+# ✅ Fungsi untuk menangani Webhook dari Telegram
 @app.route("/webhook", methods=["POST"])
 async def webhook():
     update = Update.de_json(request.get_json(), bot)
-
-    # *Pastikan aplikasi sudah diinisialisasi sebelum menerima update*
-    await application.initialize()
+    logger.info(f"Webhook menerima update: {update}")
 
     await application.process_update(update)
     return "OK", 200
 
-# Fungsi root untuk cek apakah bot aktif
+# ✅ Fungsi root untuk cek bot jalan
 @app.route("/", methods=["GET"])
 def home():
     return "Bot is running!"
 
-# Fungsi untuk Set Webhook
+# ✅ Fungsi untuk set webhook
 async def set_webhook():
     if WEBHOOK_URL:
-        print(f"Setting webhook ke {WEBHOOK_URL}/webhook")
-        await application.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
+        logger.info(f"Setting webhook ke {WEBHOOK_URL}/webhook")
+        await bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
     else:
-        print("ERROR: WEBHOOK_URL tidak ditemukan.")
+        logger.error("ERROR: WEBHOOK_URL tidak ditemukan!")
 
-# Jalankan bot
+# ✅ Run bot
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
-    loop = asyncio.get_event_loop()
+    port = int(os.environ.get("PORT", 5000))
 
-    # *Penting: Initialize aplikasi sebelum menerima update*
-    loop.run_until_complete(application.initialize())
-    loop.run_until_complete(set_webhook())  # Set webhook sebelum Flask jalan
+    # Set Webhook sebelum Flask jalan
+    asyncio.run(set_webhook())
 
-    # Jalankan Flask untuk menangani webhook
+    # Jalankan Flask
     app.run(debug=True, host="0.0.0.0", port=port)
