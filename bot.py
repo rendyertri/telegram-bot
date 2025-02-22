@@ -72,7 +72,7 @@ def home():
     return "Bot is running!"
 
 # Run bot
-if _name_ == "_main_":
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
 
     # Set Webhook untuk Telegram Bot
