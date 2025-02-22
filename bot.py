@@ -1,3 +1,5 @@
+from datetime import datetime
+import pytz
 from telegram import Update, KeyboardButton, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 import requests
@@ -22,19 +24,18 @@ async def location(update: Update, context: CallbackContext) -> None:
     user = update.message.from_user
     location = update.message.location
 
-    # Ambil waktu sekarang dalam format "HH:MM:SS" (dengan titik dua)
-    now = datetime.now()
-    checkin_time = now.strftime("%H:%M:%S")  # Format sudah benar pakai titik dua
+    # Konversi waktu dari UTC ke WIB
+    utc_now = datetime.utcnow()
+    wib = pytz.timezone("Asia/Jakarta")
+    wib_now = utc_now.replace(tzinfo=pytz.utc).astimezone(wib)
+    formatted_time = wib_now.strftime("%H:%M:%S")  # Format jam WIB
 
-    # Data yang akan dikirim ke Google Sheets
     data = {
         "username": user.username if user.username else user.first_name,
         "latitude": location.latitude,
         "longitude": location.longitude,
-        "checkin_time": checkin_time  # Pastikan waktu dikirim dalam format HH:MM:SS
+        "time": formatted_time  # Kirim waktu yang sudah dikonversi ke WIB
     }
-
-    print(f"[DEBUG] Data yang dikirim ke Google Sheets: {data}")  # Debug log
 
     # Kirim data ke Google Sheets via Apps Script
     response = requests.post(GOOGLE_SCRIPT_URL, json=data)
