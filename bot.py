@@ -62,7 +62,9 @@ application.add_handler(MessageHandler(filters.LOCATION, location))
 async def webhook():
     update = Update.de_json(request.get_json(), bot)
 
-    # Proses update dari Telegram
+    # *Pastikan aplikasi sudah diinisialisasi sebelum menerima update*
+    await application.initialize()
+
     await application.process_update(update)
     return "OK", 200
 
