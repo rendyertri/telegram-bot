@@ -85,7 +85,7 @@ if __name__ == "__main__":
     else:
         print("ERROR: WEBHOOK_URL tidak ditemukan di environment variables.")
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
     asyncio.run(set_webhook())  # Set Webhook sebelum Flask jalan
     app.run(debug=True, host="0.0.0.0", port=port)
