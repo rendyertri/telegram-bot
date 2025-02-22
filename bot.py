@@ -1,20 +1,19 @@
 from datetime import datetime
 import pytz
 import os
+import asyncio
 from flask import Flask, request
 from telegram import Update, KeyboardButton, ReplyKeyboardMarkup, Bot
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackContext
 import requests
-import asyncio
-
 
 # Ganti dengan API Token dari @BotFather
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")  # Gunakan environment variable
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzpBF-a36aPqnqkcDPi-zLDHyn2N6lKClDKbvKZjmZzeI0X9leiLmk145fukf5Aohwl6g/exec"
-WEBHOOK_URL = os.getenv("https://telegram-bot-5iyf.onrender.com")  # URL Webhook yang dikasih Render
+WEBHOOK_URL = os.getenv("WEBHOOK_URL", "https://telegram-bot-5iyf.onrender.com")  # URL Webhook dari Render
 
 # Inisialisasi Flask
-app = Flask(__name__)
+app = Flask(_name_)
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 # Inisialisasi Telegram Bot (Application)
@@ -73,22 +72,19 @@ def webhook():
 def home():
     return "Bot is running!"
 
-# Run bot
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
-
-    # Set Webhook untuk Telegram Bot
-    async def set_webhook():
+# Fungsi untuk set webhook
+async def set_webhook():
     if WEBHOOK_URL:  # Pastikan WEBHOOK_URL tidak kosong
         print(f"Setting webhook to {WEBHOOK_URL}/webhook")
         await application.bot.set_webhook(url=f"{WEBHOOK_URL}/webhook")
     else:
         print("ERROR: WEBHOOK_URL tidak ditemukan di environment variables.")
 
+# Run bot
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Port wajib ada di Render
+
     asyncio.run(set_webhook())  # Set Webhook sebelum Flask jalan
-    app.run(debug=True, host="0.0.0.0", port=port)
 
     # Jalankan Flask untuk menjaga bot tetap hidup
     app.run(debug=True, host="0.0.0.0", port=port)
